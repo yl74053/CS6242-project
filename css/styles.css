@@ -1,0 +1,18 @@
+/* Left column */
+.leftcolumn {   
+  float: left;
+  width: 65%;
+}
+
+/* Right column */
+.rightcolumn {
+  float: left;
+  width: 35%;
+}
+
+@media screen and (max-width: 800px) {
+  .leftcolumn, .rightcolumn {   
+    width: 100%;
+  }
+}
+
