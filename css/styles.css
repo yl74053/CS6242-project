@@ -1,18 +1,19 @@
-/* Left column */
-.leftcolumn {   
-  float: left;
-  width: 65%;
+ul.a {
+  list-style-type: none;
 }
 
-/* Right column */
-.rightcolumn {
-  float: left;
-  width: 35%;
+.left {
+	float : left;
+	background: steelblue;
+	margin : 1.5%;
 }
 
-@media screen and (max-width: 800px) {
-  .leftcolumn, .rightcolumn {   
-    width: 100%;
-  }
+.left2 {
+	float : left;
+	background: white;
+	margin : 1.5%;
 }
 
+body {
+	background-color: lightblue;
+}

@@ -8,14 +8,59 @@
 
 <body>
 	<H3><center>FlyOnTime</center></H3>
-	<div class="leftcolumn" align="right">
-		<svg id = "box"  width="90%" height="120" style="border: 1px solid #777;"></svg>
-		<svg id = "box1"  width="90%" height="60" style="border: 1px solid #777;"></svg>
-		<svg id = "map"  width="90%" height="400" style="border: 1px solid #777;"></svg>
+	<div class = "left">
+		Flight Date
+			<ul class = "a" >
+				<li>
+					Month  
+					<select id="month"></select>
+				</li>
+				<br>
+				<li>
+					Day
+					<select id="date"></select>
+				</li>
+			</ul>
+		Flight Time
+			<ul class = "a" >
+				<li>
+					Take-off  
+					<select id="take-off1"></select>
+					-
+					<select id="take-off2"></select>
+				</li>
+				<br>
+				<li>
+					Arrival
+					<select id="arrival1"></select>
+					-
+					<select id="arrival2"></select>
+				</li>
+			</ul>
+		<br>
+			Flight Company 
+			<select id="company"></select>
+		<br>
+		<br>
+		Airport 
+		<ul class = "a" >
+			<li>
+				Departure 
+				<select id="departure"></select>
+			</li>
+			<br>
+			<li>
+				Arrival
+				<select id="arrival"></select>
+			</li>
+		</ul>
 	</div>
-	<div class = "rightcolumn" align="left">
-		<svg id = "info" width="90%" height="600" style="border: 1px solid #777;"></svg>
+
+	<div class = "left2">
+		<svg id = "map"  width="700" height="500" style="border: 1px solid #777;"></svg>
+		<svg id = "info" width="300" height="500" style="border: 1px solid #777;"></svg>
 	</div>
+
 
 </body>
 
