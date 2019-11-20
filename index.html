@@ -1,13 +1,15 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
-<script src="https://d3js.org/d3.v5.min.js"></script>
+<script src="library/d3.v5.min.js"></script>
+<script src="library/topojson.v2.min.js"></script>
+<script src="library/d3-scale-chromatic.v1.min.js"></script>
 
 <head>
 	<title>CSE 6242 Final Project</title>
 </head>
 
 <body>
-	<H3><center>FlyOnTime</center></H3>
+	<H1><center>FlyOnTime</center></H1>
 	<div class = "left">
 		Flight Date
 			<ul class = "a" >
@@ -18,7 +20,7 @@
 				<br>
 				<li>
 					Day
-					<select id="date"></select>
+					<select id="date" disabled ="true"></select>
 				</li>
 			</ul>
 		Flight Time
@@ -57,8 +59,8 @@
 	</div>
 
 	<div class = "left2">
-		<svg id = "map"  width="700" height="500" style="border: 1px solid #777;"></svg>
-		<svg id = "info" width="300" height="500" style="border: 1px solid #777;"></svg>
+		<svg id = "map"  width="700" height="550"></svg>
+		<svg id = "info" width="300" height="550"></svg>
 	</div>
 
 
