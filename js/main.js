@@ -2,7 +2,7 @@
 
 var month = ["All", "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
 
-var day = ["All", 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31]
+var day = ["All", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
 var time = ["0:00", "1:00", "2:00", "3:00", "4:00", "5:00", "6:00", "7:00", "8:00", "9:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00", "22:00", "23:00", "24:00"]
 
@@ -157,44 +157,6 @@ panel4.append("text")
 panel4.attr("opacity", 0)
 
 var mSelector = d3.select('#month')
-                .on("change",
-
-                    function(d) {
-
-                        var v = d3.select(this).node().value
-                        if (month.indexOf(v) > 0) {
-                            d3.select('#date').property("disabled", false)
-                            d3.select('#date2').property("disabled", false)
-                            d3.select('#date').selectAll("option").remove()
-                            d3.select('#date2').selectAll("option").remove()
-                            var daydata = day
-                            if ( v == "April" || v ==  "June" || v == "September" || v == "November") {
-                                daydata = daydata.slice(0, 31)
-                            }
-                            if ( v == "February") {
-                                daydata = daydata.slice(0, 29)
-                            }
-
-                            d3.select('#date').selectAll("option")
-                                .data(daydata)
-                                .enter()
-                                .append("option")
-                                .text(function(d){ return d;});
-
-                            d3.select('#date2').selectAll("option")
-                                .data(daydata)
-                                .enter()
-                                .append("option")
-                                .text(function(d){ return d;});
-
-                        } else {
-                            d3.select('#date').property("disabled", true)
-                            d3.select('#date2').property("disabled", true)
-                        }
-
-
-                    } 
-                )
 
 var mOption = mSelector.selectAll("option")
         			.data(month)
@@ -202,22 +164,13 @@ var mOption = mSelector.selectAll("option")
         			.append("option")
             		.text(function(d){ return d;});
 
-var dSelector = d3.select('#date')
+var mSelector = d3.select('#date')
 
-var dOption = dSelector.selectAll("option")
-        			.data(day)
-        			.enter()
-        			.append("option")
-            		.text(function(d){ return d;});
-
-var d2Selector = d3.select('#date2')
-
-var d2Option = d2Selector.selectAll("option")
+var mOption = mSelector.selectAll("option")
                     .data(day)
                     .enter()
                     .append("option")
                     .text(function(d){ return d;});
-
 
 var t1Selector = d3.select('#take-off1')
 
