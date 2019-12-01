@@ -16,10 +16,33 @@ var city3= ["N/A", "ATL", "LAX","Chicago","Dallas","Denver","New York","San Fran
 
 //<--------------------------------------------------------- END OF UPDATE
 
+var rawData = null
+
+var curData = null
+
+var curMonth = "All"
+
+var curDay = "All"
+
+var curOri = "N/A"
+
+var curDest = "N/A"
+
+var curT1 = "0:00"
+
+var curT2 = "24:00"
+
+var curA1 = "0:00"
+
+var curA2 = "24:00"
+
 
 var mapholder = d3.select('#map')
 
 var map = mapholder.append("g")
+            .attr("transform", "translate( -110 , 0 )")
+
+var cityholder = mapholder.append("g")
             .attr("transform", "translate( -110 , 0 )")
 
 
@@ -164,52 +187,10 @@ panel4.append("text")
 panel4.attr("opacity", 0)
 
 var mSelector = d3.select('#month')
-                .on("change",
-
-                    function(d) {
-
-                        var v = d3.select(this).node().value
-                        
-                        if (month.indexOf(v) > 0) {
-                            d3.select('#date').property("disabled", false)
-                            d3.select('#date2').property("disabled", false)
-                            d3.select('#date').selectAll("option").remove()
-                            d3.select('#date2').selectAll("option").remove()
-                            var daydata = day
-                            if ( v == "April" || v ==  "June" || v == "September" || v == "November") {
-                                daydata = daydata.slice(0, 31)
-                            }
-                            if ( v == "February") {
-                                daydata = daydata.slice(0, 29)
-                            }
-
-                            d3.select('#date').selectAll("option")
-                                .data(daydata)
-                                .enter()
-                                .append("option")
-                                .text(function(d){
-                                 return d;});
-
-
-                            d3.select('#date2').selectAll("option")
-                                .data(daydata)
-                                .enter()
-                                .append("option")
-                                .text(function(d){ return d;});
-
-                        } else {
-                            d3.select('#date').property("disabled", true)
-                            d3.select('#date2').property("disabled", true)
-                        }
-
-
-                    } 
-                )
 
 // ZHENGYANG CHEN CODE : DATA RETRIEVAL AND MANIPULATION------------------------------->
 
 
-var datasetvar;
 
 d3.dsv(",","data/delay.csv",function(d){
         return{
@@ -226,7 +207,7 @@ d3.dsv(",","data/delay.csv",function(d){
       }).then(function(dataset){
 
         datasetvar=dataset
-        //console.log(dataset);
+        console.log(dataset);
 
 var filtered_data=dataset
 
@@ -393,7 +374,7 @@ function calc_perc(d){
 
 })
 
-console.log(datasetvar)
+//console.log(datasetvar)
 
 
 //<-------------------------------END OF  ZHENGYANG CHEN CODE : DATA RETRIEVAL AND MANIPULATION
@@ -416,14 +397,6 @@ var dSelector = d3.select('#date')
 
 
 var dOption = dSelector.selectAll("option")
-                    .data(day)
-                    .enter()
-                    .append("option")
-                    .text(function(d){ return d;});
-
-var d2Selector = d3.select('#date2')
-
-var d2Option = d2Selector.selectAll("option")
                     .data(day)
                     .enter()
                     .append("option")
@@ -595,17 +568,25 @@ var usmap = d3.json("data/states-10m.json").then(
 
     function(us) {
 
+
         map.attr("class", "states")
                 .selectAll("path")
                 .data(topojson.feature(us, us.objects.states).features)
                 .enter().append("path")
                 .attr("d", path)
-                .style("fill",  "steelblue");
+                .style("fill",  "lightblue");
 
         map.append("path")
                 .datum(topojson.mesh(us, us.objects.states, function(a, b) { return a !== b; }))
                 .attr("class", "state-borders")
                 .attr("d", path);
+
+        map.append("circle")
+            .attr("cx", 10)
+            .attr("cy", 10)
+            .attr("fill", "red")
+            .attr("r", 6)
+
 
         var legend = mapholder.append("g")
                         .attr("transform", "translate( 10 , 500 )")
@@ -749,12 +730,87 @@ var usmap = d3.json("data/states-10m.json").then(
     }
 )
 
-var citys = d3.json("data/city.json").then().then(
+var citys = d3.json("data/city.json").then(
 
 
     function(data) {
 
-        console.log(data)
+        var piedata = {"Delay": 3, "On-Time": 7}
+
+        var piecolor = d3.scaleOrdinal().domain(piedata).range(["#e74c3c", "#2ecc71"])
+        
+        var pie = d3.pie().value( d => d.value)
+
+        var data_ready = pie(d3.entries(piedata))
+
+        var arc = d3.arc().innerRadius(8).outerRadius(15)
+
+        /*cityholder.selectAll("circle")
+            .data(data.features).enter()
+            .append("circle")
+            .attr("cx", 
+                function (d) {
+                    console.log(d)
+                    if (projection(d.geometry.coordinates) != null){
+                        return projection(d.geometry.coordinates)[0] 
+                    }
+                    return 0
+                }
+            )
+            .attr("cy", 
+                function (d) { 
+                    if (projection(d.geometry.coordinates) != null){
+                        return projection(d.geometry.coordinates)[1] 
+                    }
+                    return 0
+                }
+            )
+            .attr("r", function(d){ return 5;})
+            .attr("fill", "red")*/
+
+
+        cityholder.selectAll("g")
+            .data(data.features).enter()
+            .append("g")
+            .attr("transform", 
+                function(d) {
+                     drawpie(d3.select(this))
+                     return "translate(" + projection(d.geometry.coordinates)[0]  +"," + projection(d.geometry.coordinates)[1] +")"
+                }
+             )
+            .on("mouseover",
+                function(d) {
+                    d3.select(this).select("piechart")
+                }
+            )
+            .append("text")
+            .text(
+                function(d) {
+                    console.log(d.properties.name)
+                    return d.properties.name
+                }
+            )
+            .style("font-size", "12px")
+            .style("fill", "black")
+            .style("font-weight", "bold")
+            
+
+        function drawpie(holder) {
+
+            holder.selectAll("piechart")
+                .data(data_ready)
+                    .enter()
+                    .append('path')
+                        .attr('d', arc)
+                        .attr('fill', d => piecolor(d.data.key))
+
+        }
+                
+
+
+
+
+
 
     }
 
