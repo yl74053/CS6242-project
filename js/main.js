@@ -595,8 +595,6 @@ var usmap = d3.json("data/states-10m.json").then(
 
     function(us) {
 
-        console.log(us)
-
         map.attr("class", "states")
                 .selectAll("path")
                 .data(topojson.feature(us, us.objects.states).features)
@@ -749,4 +747,15 @@ var usmap = d3.json("data/states-10m.json").then(
                 )
         
     }
+)
+
+var citys = d3.json("data/city.json").then().then(
+
+
+    function(data) {
+
+        console.log(data)
+
+    }
+
 )
