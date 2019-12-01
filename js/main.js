@@ -18,13 +18,13 @@ var rawData = null
 
 var curData = null
 
-var curMonth = "All"
+var curMonth = 0
 
-var curDay = "All"
+var curDay = 0
 
-var curOri = "N/A"
+var curOri = null
 
-var curDest = "N/A"
+var curDest = null
 
 var curT1 = 0
 
@@ -189,6 +189,7 @@ var mSelector = d3.select('#month')
                     .on("change", 
                         function(d) {
                             curMonth =  month.indexOf(d3.select(this).node().value);
+                            updateData()
                         }
                     )
 
@@ -205,6 +206,8 @@ var dSelector = d3.select('#date')
                     .on("change", 
                         function(d) {
                             curDay = day.indexOf(d3.select(this).node().value);
+                            updateData();
+
                         }
                     )
 
@@ -221,6 +224,7 @@ var t1Selector = d3.select('#take-off1')
                     .on("change", 
                         function(d) {
                             curT1 = time.indexOf(d3.select(this).node().value)*100;
+                            updateData();
                         }
                     )
 
@@ -235,6 +239,7 @@ var t2Selector = d3.select('#take-off2')
                     .on("change", 
                         function(d) {
                             curT2 = time.indexOf(d3.select(this).node().value)*100;
+                            updateData();
                         }
                     )
 
@@ -249,7 +254,7 @@ var a1Selector = d3.select('#arrival1')
                     .on("change", 
                         function(d) {
                             curA1 = time.indexOf(d3.select(this).node().value)*100;
-                            console.log(curA1)
+                            updateData();
                         }
                     )
 
@@ -263,7 +268,7 @@ var a2Selector = d3.select('#arrival2')
                     .on("change", 
                         function(d) {
                             curA2 = time.indexOf(d3.select(this).node().value)*100;
-                            console.log(curA2)
+                            updateData();
                         }
                     )
 
@@ -281,8 +286,6 @@ var tSelector = d3.select('#departure')
                         function(d) {
 
                             var v = d3.select(this).node().value
-
-                            curOri = v
 
                             if (v == "N/A") {
                                 origin = null
@@ -323,6 +326,14 @@ var tSelector = d3.select('#departure')
 
                             }
 
+                            console.log(origin)
+
+                            curOri = origin
+
+                            updateData();
+
+                            console.log(curData)
+
                         }
                     )
 
@@ -339,7 +350,7 @@ var aSelector = d3.select('#arrival')
 
                             var v = d3.select(this).node().value
 
-                            curDest = v
+                            console.log(v)
 
                             if (v == "N/A") {
                                 target = null
@@ -379,6 +390,12 @@ var aSelector = d3.select('#arrival')
                                 panel4.select(".odCity").text(origin + " - " + target)
 
                             }
+
+                            curDest = target
+
+                            updateData();
+
+                            console.log(curData)
 
                         }
     
@@ -653,10 +670,10 @@ var citys = d3.json("data/city.json").then(
 d3.dsv(",","data/delay.csv",function(d){
         return{
           month:  +d.MONTH,
-          DAY:   d.DAY_OF_WEEK,
+          day:   d.DAY_OF_WEEK,
           carrier: d.OP_UNIQUE_CARRIER,
-          ORI:   d.ORIGIN_CITY,
-          DEST:  d.DEST_CITY,
+          ori:   d.ORIGIN_CITY,
+          dest:  d.DEST_CITY,
           time: d.DEP_TIME_BLK.split("-"),
           delay: +d.DELAY_SUM,
           total_num: +d.NUM_TOTAL,
@@ -672,7 +689,44 @@ d3.dsv(",","data/delay.csv",function(d){
                 }
             )
 
-            console.log(dataset)
+            rawData = dataset
+            curData = dataset
     })
+
+
+function updateData() {
+
+
+    curData = rawData
+    if(curDay) {
+        curData = curData.filter(d => d.day == curDay)
+    }
+    if(curMonth) {
+        curData = curData.filter(d => d.month == curMonth)
+    }
+
+    if(curT2 >= curT1) {
+        curData = curData.filter(d => d.dep_time >= curT1 && d.dep_time <= curT2)
+    } else {
+        curData = curData.filter(d => d.dep_time >= curT2 && d.dep_time <= curT1)
+    }
+
+    if(curA2 >= curA1) {
+        curData = curData.filter(d => d.arr_time >= curA1 && d.arr_time <= curA2)
+    } else {
+        curData = curData.filter(d => d.arr_time >= curA2 && d.arr_time <= curA1)
+    }
+
+    if (curOri != null) {
+        curData = curData.filter(d => d.ori == curOri)
+    }
+
+    if (curDest != null) {
+        curData = curData.filter(d => d.dest == curDest)
+    }
+
+}
+
+
 
 
