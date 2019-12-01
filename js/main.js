@@ -4,9 +4,7 @@ var month = ["All", "January", "February", "March", "April", "May", "June", "Jul
 
 var day = ["All", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
-var time = ["0:00", "1:00", "2:00", "3:00", "4:00", "5:00", "6:00", "7:00", "8:00", "9:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00", "22:00", "23:00", "24:00"]
-
-var timeN = ["000", "100", "200", "300", "400", "500", "600", "700", "800", "900", "1000", "1100", "1200", "1300", "1400", "1500", "1600", "1700", "1800", "1900", "2000", "2100", "2200", "2200", "2300", "2400"]
+var time = ["0:00", "1:00", "2:00", "3:00", "4:00", "5:00", "6:00", "7:00", "8:00", "9:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00", "23:00", "24:00"]
 
 //ZHENGYANG CHEN UPDATE CITY LIST---------------------------------------------------------------->
 
@@ -28,13 +26,13 @@ var curOri = "N/A"
 
 var curDest = "N/A"
 
-var curT1 = "0:00"
+var curT1 = 0
 
-var curT2 = "24:00"
+var curT2 = 2400
 
-var curA1 = "0:00"
+var curA1 = 0
 
-var curA2 = "24:00"
+var curA2 = 2400
 
 
 var mapholder = d3.select('#map')
@@ -186,199 +184,13 @@ panel4.append("text")
 
 panel4.attr("opacity", 0)
 
+
 var mSelector = d3.select('#month')
-
-// ZHENGYANG CHEN CODE : DATA RETRIEVAL AND MANIPULATION------------------------------->
-
-
-
-d3.dsv(",","data/delay.csv",function(d){
-        return{
-          month:  +d.MONTH,
-          DAY:   d.DAY_OF_WEEK,
-          carrier: d.OP_UNIQUE_CARRIER,
-          ORI:   d.ORIGIN_CITY,
-          DEST:  d.DEST_CITY,
-          DEPT_TIME: d.DEP_TIME_BLK,
-          delay: +d.DELAY_SUM,
-          total_num: +d.NUM_TOTAL,
-          delay_num: +d.NUM_DELAY
-         };
-      }).then(function(dataset){
-
-        datasetvar=dataset
-        console.log(dataset);
-
-var filtered_data=dataset
-
-
-//MODULE 1.1 ACTION MODULE------------------------->
-
-var seldate1=d3.select('#date')
-           .on("change",selection_on_change)
-
-var seldate2=d3.select('#date2')
-           .on("change",selection_on_change)
-
-var selmonth=d3.select("#month")
-           .on("change",selection_on_change)
-
-var seldept=d3.select("#departure")
-           .on("change",selection_on_change)
-
-var selarr=d3.select("#arrival")
-           .on("change",selection_on_change)
-
-var seldepttime1=d3.select("#takeoff1")
-           .on("change",selection_on_change)
-
-var seldepttime2=d3.select("#takeoff2")
-           .on("change",selection_on_change)
-
-var selarrtime1=d3.select("#arrival1")
-           .on("change",selection_on_change)
-
-var selarrtime2=d3.select("#arrival2")
-           .on("change",selection_on_change)
-//<-------------------------------END OF MODULE 1.1 ACTION MODULE
-
-
-
-
-//MODULE 1.2 DATA FILTER MODULE ------------------------------------>
-
-//NO ARRIVAL TIME, HOLD------------------
-//===========================
-function flight_time_filter(d,takeoff1,takeoff2,arr1,arr2){
-    return 0;
-}
-//===========================
-//-----------------NO ARRIVAL TIME, HOLD
-
-function dept_arr_filter(d,dept,arr){
-    if (dept=='N/A' && arr=='N/A'){
-        return 1;
-    }
-    if (dept=='N/A'){
-        if (arr==d.DEST){
-            return 1;
-        }
-    }
-    if (arr=='N/A'){
-        if (dept==d.ORI)
-            return 1;
-    }
-    if (dept==d.ORI && arr==d.DEST){
-        return 1;
-    }
-    return 0;
-
-}
-
-function month_date_filter(d,month,date1,date2){
-    min_d=+date1
-    max_d=+date2
-    //console.log(+month,+d.month,min_d,max_d,d.DAY)
-    //if (max_d<min_d){return 0;}
-    if ((+month==+d.month || +month== 0)&&(min_d<=+d.DAY || d.DAY=='All')&&(max_d>=+d.DAY || d.DAY=='All')){
-        return 1;
-    }
-    return 0;
-}
-
-
-function selection_on_change(d){
-    var curday1=d3.select('#date').node().value; 
-    var curday2=d3.select('#date2').node().value; 
-    var curmonth=d3.select('#month').node().value
-    var curmonth_index=month.indexOf(curmonth)
-    var dept = d3.select('#departure').node().value
-    var arr=d3.select('#arrival').node().value
-    //console.log(+curday)
-    //console.log(curmonth,curday1,curmonth_index,curday2,dept,arr)
-    //console.log(filtered_data)
-
-    var dept_arr_filtered=filtered_data.filter(function(d){
-        //console.log(dept_arr_filter(d,dept,arr))
-        if (dept_arr_filter(d,dept,arr)==1){
-            return d;
-        }
-    })
-    //console.log(dept_arr_filtered)
-
-    var dayfiltered=dept_arr_filtered.filter(function(d){
-        if (month_date_filter(d,curmonth_index,curday1,curday2)==1){
-            return d;
-        }
-    })
-    console.log(dayfiltered)
-
-//-----------------------------------------
-    var AVG=calc_avg(dayfiltered).toFixed(2)
-
-    var PERC=calc_perc(dayfiltered).toFixed(2)
-//----------------------------------------
-
-    console.log(AVG,PERC)
-
-
-
-//<<<<<<<<<<<<< ZHA CODE TRIAL ENTER
-
-//IMPLEMENT ZHA'S CODE HERE
-
-//>>>>>>>>>>>>>>>>>>>>>>>>>>>>ZHA CODE TRIAL EXIT
-
-    return(d);
-}
-//<----------------------------------END OF MODULE 1.2 DATA FILTER MODULE
-
-//MODULE 1.3 AVG & PERCENTAGE CALCULATION------------------------------>
-
-function calc_avg(d){
-    var sum=0;
-    var t_num=0;
-    var d_num=0;
-    d.forEach(function(e){
-        sum=e.delay+sum;
-        d_num=e.delay_num+d_num;
-    })
-
-    if (sum==0){
-        return 0;
-    }
-
-    var avg=sum/d_num;
-
-    return avg;
-}
-
-function calc_perc(d){
-    var t_num=0;
-    var d_num=0;
-    d.forEach(function(e){
-        d_num=e.delay_num+d_num;
-        t_num=e.total_num+t_num;
-    })
-
-    if (d_num==0){
-        return 0;
-    }
-    var perc=100*d_num/t_num;
-
-    return perc;
-}
-
-    
-//<-------------------------END OF MODULE 1.3 AVG & PERCENTAGE CALCULATION
-
-})
-
-//console.log(datasetvar)
-
-
-//<-------------------------------END OF  ZHENGYANG CHEN CODE : DATA RETRIEVAL AND MANIPULATION
-
+                    .on("change", 
+                        function(d) {
+                            curMonth =  month.indexOf(d3.select(this).node().value);
+                        }
+                    )
 
 
 var mOption = mSelector.selectAll("option")
@@ -389,10 +201,12 @@ var mOption = mSelector.selectAll("option")
                         return d;});
 
 
-
-
 var dSelector = d3.select('#date')
-
+                    .on("change", 
+                        function(d) {
+                            curDay = day.indexOf(d3.select(this).node().value);
+                        }
+                    )
 
 
 
@@ -404,6 +218,11 @@ var dOption = dSelector.selectAll("option")
 
 
 var t1Selector = d3.select('#take-off1')
+                    .on("change", 
+                        function(d) {
+                            curT1 = time.indexOf(d3.select(this).node().value)*100;
+                        }
+                    )
 
 
 var t1Option = t1Selector.selectAll("option")
@@ -413,6 +232,11 @@ var t1Option = t1Selector.selectAll("option")
                     .text(function(d){ return d;});
 
 var t2Selector = d3.select('#take-off2')
+                    .on("change", 
+                        function(d) {
+                            curT2 = time.indexOf(d3.select(this).node().value)*100;
+                        }
+                    )
 
 var t2Option = t2Selector.selectAll("option")
                     .data(time)
@@ -422,6 +246,12 @@ var t2Option = t2Selector.selectAll("option")
                     .property("selected", true);
 
 var a1Selector = d3.select('#arrival1')
+                    .on("change", 
+                        function(d) {
+                            curA1 = time.indexOf(d3.select(this).node().value)*100;
+                            console.log(curA1)
+                        }
+                    )
 
 var a1Option = a1Selector.selectAll("option")
                     .data(time)
@@ -430,6 +260,12 @@ var a1Option = a1Selector.selectAll("option")
                     .text(function(d){ return d;});
 
 var a2Selector = d3.select('#arrival2')
+                    .on("change", 
+                        function(d) {
+                            curA2 = time.indexOf(d3.select(this).node().value)*100;
+                            console.log(curA2)
+                        }
+                    )
 
 var a2Option = a2Selector.selectAll("option")
                     .data(time)
@@ -445,6 +281,8 @@ var tSelector = d3.select('#departure')
                         function(d) {
 
                             var v = d3.select(this).node().value
+
+                            curOri = v
 
                             if (v == "N/A") {
                                 origin = null
@@ -500,6 +338,8 @@ var aSelector = d3.select('#arrival')
                         function(d) {
 
                             var v = d3.select(this).node().value
+
+                            curDest = v
 
                             if (v == "N/A") {
                                 target = null
@@ -786,7 +626,6 @@ var citys = d3.json("data/city.json").then(
             .append("text")
             .text(
                 function(d) {
-                    console.log(d.properties.name)
                     return d.properties.name
                 }
             )
@@ -805,13 +644,35 @@ var citys = d3.json("data/city.json").then(
                         .attr('fill', d => piecolor(d.data.key))
 
         }
-                
-
-
-
-
-
 
     }
 
 )
+
+
+d3.dsv(",","data/delay.csv",function(d){
+        return{
+          month:  +d.MONTH,
+          DAY:   d.DAY_OF_WEEK,
+          carrier: d.OP_UNIQUE_CARRIER,
+          ORI:   d.ORIGIN_CITY,
+          DEST:  d.DEST_CITY,
+          time: d.DEP_TIME_BLK.split("-"),
+          delay: +d.DELAY_SUM,
+          total_num: +d.NUM_TOTAL,
+          delay_num: +d.NUM_DELAY
+        };
+        }).then(function(dataset){
+            
+            dataset.forEach(
+                function(d) {
+                    d.dep_time = Number(d.time[0])
+                    d.arr_time = Number(d.time[1])
+                    return d
+                }
+            )
+
+            console.log(dataset)
+    })
+
+
