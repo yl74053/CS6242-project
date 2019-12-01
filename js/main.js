@@ -8,7 +8,14 @@ var time = ["0:00", "1:00", "2:00", "3:00", "4:00", "5:00", "6:00", "7:00", "8:0
 
 var timeN = ["000", "100", "200", "300", "400", "500", "600", "700", "800", "900", "1000", "1100", "1200", "1300", "1400", "1500", "1600", "1700", "1800", "1900", "2000", "2100", "2200", "2200", "2300", "2400"]
 
-var city = ["N/A", "Atlanta", "Miami"]
+//ZHENGYANG CHEN UPDATE CITY LIST---------------------------------------------------------------->
+
+var city = ["N/A", "Atlanta", "Los Angeles","Chicago","Dallas","Denver","New York","San Francisco","Seattle","Las Vegas","Orlando","Charlotte","Phoenix","Houston","Miami","Boston","Minneapolis","Detroit","Philadelphia","Washington, D.C.","Salt Lake City","San Diego","Tampa","Portland","Honolulu"]
+
+var city3= ["N/A", "ATL", "LAX","Chicago","Dallas","Denver","New York","San Francisco","Seattle","Las Vegas","Orlando","Charlotte","Phoenix","Houston","Miami","Boston","Minneapolis","Detroit","Philadelphia","Washington, D.C.","Salt Lake City","San Diego","Tampa","Portland","Honolulu"]
+
+//<--------------------------------------------------------- END OF UPDATE
+
 
 var mapholder = d3.select('#map')
 
@@ -157,54 +164,305 @@ panel4.append("text")
 panel4.attr("opacity", 0)
 
 var mSelector = d3.select('#month')
+                .on("change",
+
+                    function(d) {
+
+                        var v = d3.select(this).node().value
+                        
+                        if (month.indexOf(v) > 0) {
+                            d3.select('#date').property("disabled", false)
+                            d3.select('#date2').property("disabled", false)
+                            d3.select('#date').selectAll("option").remove()
+                            d3.select('#date2').selectAll("option").remove()
+                            var daydata = day
+                            if ( v == "April" || v ==  "June" || v == "September" || v == "November") {
+                                daydata = daydata.slice(0, 31)
+                            }
+                            if ( v == "February") {
+                                daydata = daydata.slice(0, 29)
+                            }
+
+                            d3.select('#date').selectAll("option")
+                                .data(daydata)
+                                .enter()
+                                .append("option")
+                                .text(function(d){
+                                 return d;});
+
+
+                            d3.select('#date2').selectAll("option")
+                                .data(daydata)
+                                .enter()
+                                .append("option")
+                                .text(function(d){ return d;});
+
+                        } else {
+                            d3.select('#date').property("disabled", true)
+                            d3.select('#date2').property("disabled", true)
+                        }
+
+
+                    } 
+                )
+
+// ZHENGYANG CHEN CODE : DATA RETRIEVAL AND MANIPULATION------------------------------->
+
+
+var datasetvar;
+
+d3.dsv(",","data/delay.csv",function(d){
+        return{
+          month:  +d.MONTH,
+          DAY:   d.DAY_OF_WEEK,
+          carrier: d.OP_UNIQUE_CARRIER,
+          ORI:   d.ORIGIN_CITY,
+          DEST:  d.DEST_CITY,
+          DEPT_TIME: d.DEP_TIME_BLK,
+          delay: +d.DELAY_SUM,
+          total_num: +d.NUM_TOTAL,
+          delay_num: +d.NUM_DELAY
+         };
+      }).then(function(dataset){
+
+        datasetvar=dataset
+        //console.log(dataset);
+
+var filtered_data=dataset
+
+
+//MODULE 1.1 ACTION MODULE------------------------->
+
+var seldate1=d3.select('#date')
+           .on("change",selection_on_change)
+
+var seldate2=d3.select('#date2')
+           .on("change",selection_on_change)
+
+var selmonth=d3.select("#month")
+           .on("change",selection_on_change)
+
+var seldept=d3.select("#departure")
+           .on("change",selection_on_change)
+
+var selarr=d3.select("#arrival")
+           .on("change",selection_on_change)
+
+var seldepttime1=d3.select("#takeoff1")
+           .on("change",selection_on_change)
+
+var seldepttime2=d3.select("#takeoff2")
+           .on("change",selection_on_change)
+
+var selarrtime1=d3.select("#arrival1")
+           .on("change",selection_on_change)
+
+var selarrtime2=d3.select("#arrival2")
+           .on("change",selection_on_change)
+//<-------------------------------END OF MODULE 1.1 ACTION MODULE
+
+
+
+
+//MODULE 1.2 DATA FILTER MODULE ------------------------------------>
+
+//NO ARRIVAL TIME, HOLD------------------
+//===========================
+function flight_time_filter(d,takeoff1,takeoff2,arr1,arr2){
+    return 0;
+}
+//===========================
+//-----------------NO ARRIVAL TIME, HOLD
+
+function dept_arr_filter(d,dept,arr){
+    if (dept=='N/A' && arr=='N/A'){
+        return 1;
+    }
+    if (dept=='N/A'){
+        if (arr==d.DEST){
+            return 1;
+        }
+    }
+    if (arr=='N/A'){
+        if (dept==d.ORI)
+            return 1;
+    }
+    if (dept==d.ORI && arr==d.DEST){
+        return 1;
+    }
+    return 0;
+
+}
+
+function month_date_filter(d,month,date1,date2){
+    min_d=+date1
+    max_d=+date2
+    //console.log(+month,+d.month,min_d,max_d,d.DAY)
+    //if (max_d<min_d){return 0;}
+    if ((+month==+d.month || +month== 0)&&(min_d<=+d.DAY || d.DAY=='All')&&(max_d>=+d.DAY || d.DAY=='All')){
+        return 1;
+    }
+    return 0;
+}
+
+
+function selection_on_change(d){
+    var curday1=d3.select('#date').node().value; 
+    var curday2=d3.select('#date2').node().value; 
+    var curmonth=d3.select('#month').node().value
+    var curmonth_index=month.indexOf(curmonth)
+    var dept = d3.select('#departure').node().value
+    var arr=d3.select('#arrival').node().value
+    //console.log(+curday)
+    //console.log(curmonth,curday1,curmonth_index,curday2,dept,arr)
+    //console.log(filtered_data)
+
+    var dept_arr_filtered=filtered_data.filter(function(d){
+        //console.log(dept_arr_filter(d,dept,arr))
+        if (dept_arr_filter(d,dept,arr)==1){
+            return d;
+        }
+    })
+    //console.log(dept_arr_filtered)
+
+    var dayfiltered=dept_arr_filtered.filter(function(d){
+        if (month_date_filter(d,curmonth_index,curday1,curday2)==1){
+            return d;
+        }
+    })
+    console.log(dayfiltered)
+
+//-----------------------------------------
+    var AVG=calc_avg(dayfiltered).toFixed(2)
+
+    var PERC=calc_perc(dayfiltered).toFixed(2)
+//----------------------------------------
+
+    console.log(AVG,PERC)
+
+
+
+//<<<<<<<<<<<<< ZHA CODE TRIAL ENTER
+
+//IMPLEMENT ZHA'S CODE HERE
+
+//>>>>>>>>>>>>>>>>>>>>>>>>>>>>ZHA CODE TRIAL EXIT
+
+    return(d);
+}
+//<----------------------------------END OF MODULE 1.2 DATA FILTER MODULE
+
+//MODULE 1.3 AVG & PERCENTAGE CALCULATION------------------------------>
+
+function calc_avg(d){
+    var sum=0;
+    var t_num=0;
+    var d_num=0;
+    d.forEach(function(e){
+        sum=e.delay+sum;
+        d_num=e.delay_num+d_num;
+    })
+
+    if (sum==0){
+        return 0;
+    }
+
+    var avg=sum/d_num;
+
+    return avg;
+}
+
+function calc_perc(d){
+    var t_num=0;
+    var d_num=0;
+    d.forEach(function(e){
+        d_num=e.delay_num+d_num;
+        t_num=e.total_num+t_num;
+    })
+
+    if (d_num==0){
+        return 0;
+    }
+    var perc=100*d_num/t_num;
+
+    return perc;
+}
+
+    
+//<-------------------------END OF MODULE 1.3 AVG & PERCENTAGE CALCULATION
+
+})
+
+console.log(datasetvar)
+
+
+//<-------------------------------END OF  ZHENGYANG CHEN CODE : DATA RETRIEVAL AND MANIPULATION
+
+
 
 var mOption = mSelector.selectAll("option")
-        			.data(month)
-        			.enter()
-        			.append("option")
-            		.text(function(d){ return d;});
+                    .data(month)
+                    .enter()
+                    .append("option")
+                    .text(function(d){ 
+                        return d;});
 
-var mSelector = d3.select('#date')
 
-var mOption = mSelector.selectAll("option")
+
+
+var dSelector = d3.select('#date')
+
+
+
+
+var dOption = dSelector.selectAll("option")
                     .data(day)
                     .enter()
                     .append("option")
                     .text(function(d){ return d;});
 
+var d2Selector = d3.select('#date2')
+
+var d2Option = d2Selector.selectAll("option")
+                    .data(day)
+                    .enter()
+                    .append("option")
+                    .text(function(d){ return d;});
+
+
 var t1Selector = d3.select('#take-off1')
 
 
 var t1Option = t1Selector.selectAll("option")
-        			.data(time)
-        			.enter()
-        			.append("option")
-            		.text(function(d){ return d;});
+                    .data(time)
+                    .enter()
+                    .append("option")
+                    .text(function(d){ return d;});
 
 var t2Selector = d3.select('#take-off2')
 
 var t2Option = t2Selector.selectAll("option")
-        			.data(time)
-        			.enter()
-        			.append("option")
-            		.text(function(d){ return d;})
+                    .data(time)
+                    .enter()
+                    .append("option")
+                    .text(function(d){ return d;})
                     .property("selected", true);
 
 var a1Selector = d3.select('#arrival1')
 
 var a1Option = a1Selector.selectAll("option")
-        			.data(time)
-        			.enter()
-        			.append("option")
-            		.text(function(d){ return d;});
+                    .data(time)
+                    .enter()
+                    .append("option")
+                    .text(function(d){ return d;});
 
 var a2Selector = d3.select('#arrival2')
 
 var a2Option = a2Selector.selectAll("option")
-        			.data(time)
-        			.enter()
-        			.append("option")
-            		.text(function(d){ return d;})
+                    .data(time)
+                    .enter()
+                    .append("option")
+                    .text(function(d){ return d;})
                     .property("selected", true);
 
 
@@ -258,10 +516,10 @@ var tSelector = d3.select('#departure')
                     )
 
 var tOption = tSelector.selectAll("option")
-        			.data(city)
-        			.enter()
-        			.append("option")
-            		.text(function(d){ return d;});
+                    .data(city)
+                    .enter()
+                    .append("option")
+                    .text(function(d){ return d;});
 
 var aSelector = d3.select('#arrival')
                     .on("change", 
@@ -314,10 +572,10 @@ var aSelector = d3.select('#arrival')
                     )
 
 var aOption = aSelector.selectAll("option")
-        			.data(city)
-        			.enter()
-        			.append("option")
-            		.text(function(d){ return d;});
+                    .data(city)
+                    .enter()
+                    .append("option")
+                    .text(function(d){ return d;});
 
 
 
@@ -492,4 +750,3 @@ var usmap = d3.json("data/states-10m.json").then(
         
     }
 )
-
