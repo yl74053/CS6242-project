@@ -847,7 +847,7 @@ function drawPred() {
         })
         .transition().duration(750)
 
-
+    // add airplane dep and arr text
     bars.append("text")
         .attr("class", "label")
         .attr("y", y.bandwidth() / 2)
