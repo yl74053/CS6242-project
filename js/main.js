@@ -728,5 +728,143 @@ function updateData() {
 }
 
 
+var predictionbar = d3.csv("data/sample.csv").then(d => chart(d))
 
+function chart(csv) {
+
+    //var keys = csv.columns.slice(2);
+
+    var month = [...new Set(csv.map(d => d.MONTH))]
+    var week = [...new Set(csv.map(d => d.DAY_OF_WEEK))]
+    var origin_city = [...new Set(csv.map(d => d.ORIGIN_CITY))]
+    var dest_city = [...new Set(csv.map(d => d.DEST_CITY))]
+    var dep_time = [...new Set(csv.map(d => d.DEP_TIME_BLK))]
+    var arr_time = [...new Set(csv.map(d => d.ARR_TIME_BLK))]
+    var carrier = [...new Set(csv.map(d => d.OP_UNIQUE_CARRIER))]
+    var carrier_fl_num = [...new Set(csv.map(d => d.OP_CARRIER_FL_NUM))]
+    var crs_dep_time = [...new Set(csv.map(d => d.CRS_DEP_TIME))]
+    var crs_arr_time = [...new Set(csv.map(d => d.CRS_ARR_TIME))]
+    var predict = [...new Set(csv.map(d => d.PREDICTED_DELAY))]
+
+    //MONTH,DAY_OF_WEEK,OP_UNIQUE_CARRIER,ORIGIN_CITY,DEST_CITY,DEP_TIME_BLK,DELAY_SUM_WITH_NEG,DELAY_SUM,NUM_TOTAL,NUM_DELAY
+    //var year   = [...new Set(csv.map(d => d.Year))]
+    //var states = [...new Set(csv.map(d => d.State))]
+    //console.log(predict)
+    // update year to the origion option later
+    var options = d3.select("#year").selectAll("option")
+        .data(month)
+    .enter().append("option")
+        .text(d => d)
+
+    var svg = d3.select("#chart"),
+        margin = {top: 35, left: 35, bottom: 0, right: 0},
+        width = +svg.attr("width") - margin.left - margin.right,
+        height = +svg.attr("height") - margin.top - margin.bottom;
+
+    /*svg.append("g")
+        .attr("transform", "translate(-20, 0)")*/
+
+    var y = d3.scaleBand()
+        .range([margin.top, height - margin.bottom])
+        .padding(0.1)
+
+    var x = d3.scaleLinear()
+        .rangeRound([margin.left, width - margin.right])
+
+    var xAxis = svg.append("g")
+        .attr("transform", `translate(0,${height - margin.bottom})`)
+        .attr("class", "x-axis")
+
+    var yAxis = svg.append("g")
+        .attr("transform", `translate(${margin.left},0)`)
+        .attr("class", "y-axis")
+
+    //var z = d3.scaleOrdinal()
+        //.range(["darkorange"])
+        //.domain(keys);
+
+    update(d3.select("#year").property("value"), 0)
+
+    function update(input, speed) {
+
+        var data = csv.filter(f => f.MONTH == input)
+
+        data.forEach(function(d) {
+            d.airplane = d.OP_UNIQUE_CARRIER + d.OP_CARRIER_FL_NUM
+            console.log(d.airplane)
+            return d
+        })
+
+        // sort the prediction ascending order, and draw them in bar chart in order
+        data.sort((a, b) => d3.ascending(Number(a.PREDICTED_DELAY), Number(b.PREDICTED_DELAY)))
+        //console.log(data)
+
+        // choose top 5 predict airport
+        data = data.slice(0, 5);
+        console.log(data)
+
+        x.domain([0, d3.max(data, d => d.PREDICTED_DELAY)]).nice();
+        y.domain(data.map(d => d.airplane));
+
+        svg.selectAll(".y-axis")
+            .transition().duration(speed)
+            .call(d3.axisLeft(y))
+
+        svg.selectAll(".x-axis")
+            .transition().duration(speed)
+            .call(d3.axisBottom(x))
+
+
+        /*svg.append("g")
+            .attr("class", "x-axis")
+            .call(d3.axisBottom(x).tickSizeOuter(0));
+
+        // create y-axis
+        svg.append("g")
+            .attr("class", "y-axis")
+            .call(d3.axisLeft(y).ticks(null, "s"));*/
+
+        var bars = svg.selectAll(".barChart")
+            .data(data);
+
+        //bars.exit().remove();
+
+        bars.enter()
+            .append("rect")
+            .attr("class", "barChart")
+            .attr("x", 37)
+            .attr("y", function(d){
+                return y(d.airplane);
+            })
+            .attr("height", y.bandwidth())
+            .attr("width", function(d){
+                return x(d.PREDICTED_DELAY);
+            })
+            .style("fill", "darkorange")
+            .transition().duration(speed)
+
+        bars.attr("x", 37)
+            .attr("y", function(d){
+                return y(d.airplane);
+            })
+            .attr("height", y.bandwidth())
+            .attr("width", function(d){
+                return x(d.PREDICTED_DELAY);
+            })
+
+
+        bars.exit().remove();
+    }
+
+    var select = d3.select("#year")
+        .on("change", function() {
+            console.log(this.value)
+            update(this.value, 750)
+        })
+
+    var checkbox = d3.select("#sort")
+        .on("click", function() {
+            update(select.property("value"), 750)
+        })
+}
 
