@@ -34,6 +34,10 @@ var curA1 = 0
 
 var curA2 = 2400
 
+var rawPred = null
+
+var currPred = null
+
 
 var mapholder = d3.select('#map')
 
@@ -407,7 +411,12 @@ var aOption = aSelector.selectAll("option")
                     .append("option")
                     .text(function(d){ return d;});
 
-
+var predClick = d3.select('#predButton')
+                    .on("click", 
+                        function(d) {
+                            drawPred();
+                        }
+                    )
 
 
 
@@ -696,7 +705,6 @@ d3.dsv(",","data/delay.csv",function(d){
 
 function updateData() {
 
-
     curData = rawData
     if(curDay) {
         curData = curData.filter(d => d.day == curDay)
@@ -727,37 +735,37 @@ function updateData() {
 
 }
 
+d3.dsv(",","data/predict.csv",function(d){
+        return{
+          month:  +d.MONTH,
+          day:   +d.DAY_OF_WEEK,
+          carrier: d.OP_UNIQUE_CARRIER,
+          flight: d.OP_CARRIER_FL_NUM,
+          ori:   d.ORIGIN_CITY,
+          dest:  d.DEST_CITY,
+          time: d.DEP_TIME_BLK.split("-"),
+          pred: +d.PREDICTED_DELAY,
+          csr_dep: d.CRS_DEP_TIME,
+          csr_arr: d.CRS_ARR_TIME
+        };
+        }).then(function(dataset){
+            
+            dataset.forEach(
+                function(d) {
+                    d.dep_time = Number(d.time[0])
+                    d.arr_time = Number(d.time[1])
+                    d.airplane = d.carrier + d.flight
+                    return d
+                }
+            )
 
-var predictionbar = d3.csv("data/sample.csv").then(d => chart(d))
+            rawPred = dataset
+            currPred = dataset
+    })
 
-function chart(csv) {
-
-    //var keys = csv.columns.slice(2);
-
-    var month = [...new Set(csv.map(d => d.MONTH))]
-    var week = [...new Set(csv.map(d => d.DAY_OF_WEEK))]
-    var origin_city = [...new Set(csv.map(d => d.ORIGIN_CITY))]
-    var dest_city = [...new Set(csv.map(d => d.DEST_CITY))]
-    var dep_time = [...new Set(csv.map(d => d.DEP_TIME_BLK))]
-    var arr_time = [...new Set(csv.map(d => d.ARR_TIME_BLK))]
-    var carrier = [...new Set(csv.map(d => d.OP_UNIQUE_CARRIER))]
-    var carrier_fl_num = [...new Set(csv.map(d => d.OP_CARRIER_FL_NUM))]
-    var crs_dep_time = [...new Set(csv.map(d => d.CRS_DEP_TIME))]
-    var crs_arr_time = [...new Set(csv.map(d => d.CRS_ARR_TIME))]
-    var predict = [...new Set(csv.map(d => d.PREDICTED_DELAY))]
-
-    //MONTH,DAY_OF_WEEK,OP_UNIQUE_CARRIER,ORIGIN_CITY,DEST_CITY,DEP_TIME_BLK,DELAY_SUM_WITH_NEG,DELAY_SUM,NUM_TOTAL,NUM_DELAY
-    //var year   = [...new Set(csv.map(d => d.Year))]
-    //var states = [...new Set(csv.map(d => d.State))]
-    //console.log(predict)
-    // update year to the origion option later
-    var options = d3.select("#year").selectAll("option")
-        .data(month)
-    .enter().append("option")
-        .text(d => d)
-
+function drawPred() {
     var svg = d3.select("#chart"),
-        margin = {top: 35, left: 35, bottom: 0, right: 0},
+        margin = {top: 35, left: 60, bottom: 0, right: 0},
         width = +svg.attr("width") - margin.left - margin.right,
         height = +svg.attr("height") - margin.top - margin.bottom;
 
@@ -779,92 +787,118 @@ function chart(csv) {
         .attr("transform", `translate(${margin.left},0)`)
         .attr("class", "y-axis")
 
-    //var z = d3.scaleOrdinal()
-        //.range(["darkorange"])
-        //.domain(keys);
+    updatePred()
 
-    update(d3.select("#year").property("value"), 0)
+    currPred.sort((a, b) => d3.ascending(Number(a.pred), Number(b.pred)))
 
-    function update(input, speed) {
+    // choose top 5 predict airport
+    currPred = currPred.slice(0, 10);
+    console.log(currPred)
 
-        var data = csv.filter(f => f.MONTH == input)
+    x.domain([0, 1]).nice();
+    y.domain(currPred.map(d => d.airplane));
 
-        data.forEach(function(d) {
-            d.airplane = d.OP_UNIQUE_CARRIER + d.OP_CARRIER_FL_NUM
-            console.log(d.airplane)
-            return d
+    svg.selectAll(".y-axis")
+        .transition().duration(750)
+        .call(d3.axisLeft(y))
+        .style("font-size","12px")
+
+    svg.selectAll(".x-axis")
+        .transition().duration(750)
+        .call(d3.axisBottom(x))
+        .style("font-size","12px")
+
+
+    /*svg.append("g")
+        .attr("class", "x-axis")
+        .call(d3.axisBottom(x).tickSizeOuter(0));
+
+    // create y-axis
+    svg.append("g")
+        .attr("class", "y-axis")
+        .call(d3.axisLeft(y).ticks(null, "s"));*/
+
+    var bars = svg.selectAll(".barChart")
+        .data(currPred);
+
+    //bars.exit().remove();
+
+    bars.enter()
+        .append("rect")
+        .attr("class", "barChart")
+        .attr("x", margin.left)
+        .attr("y", function(d){
+            return y(d.airplane);
+        })
+        .attr("height", y.bandwidth())
+        .attr("width", function(d){
+            return x(d.pred);
+        })
+        .style("fill", "grey")
+        .transition().duration(750)
+
+    bars.attr("x", margin.left)
+        .attr("y", function(d){
+            return y(d.airplane);
+        })
+        .attr("height", y.bandwidth())
+        .attr("width", function(d){
+            return x(d.pred);
+        })
+        .transition().duration(750)
+
+
+    bars.append("text")
+        .attr("class", "label")
+        .attr("y", y.bandwidth() / 2)
+        //.attr("dx", 100) //margin right
+        .attr("dy", ".35em") //vertical align middle
+        .attr("text-anchor", "end")
+        .text(function(d){
+            //console.log(d.pred * 100 +"%")
+            //return (d.pred * 100 +"%");
+            console.log(d.csr_dep + " - " + d.csr_arr)
+            return (d.csr_dep + " - " + d.csr_arr);
+        })
+        .attr("x", function(d){
+            return x(d.pred);
         })
 
-        // sort the prediction ascending order, and draw them in bar chart in order
-        data.sort((a, b) => d3.ascending(Number(a.PREDICTED_DELAY), Number(b.PREDICTED_DELAY)))
-        //console.log(data)
+    bars.exit().remove();
 
-        // choose top 5 predict airport
-        data = data.slice(0, 5);
-        console.log(data)
+}
 
-        x.domain([0, d3.max(data, d => d.PREDICTED_DELAY)]).nice();
-        y.domain(data.map(d => d.airplane));
-
-        svg.selectAll(".y-axis")
-            .transition().duration(speed)
-            .call(d3.axisLeft(y))
-
-        svg.selectAll(".x-axis")
-            .transition().duration(speed)
-            .call(d3.axisBottom(x))
-
-
-        /*svg.append("g")
-            .attr("class", "x-axis")
-            .call(d3.axisBottom(x).tickSizeOuter(0));
-
-        // create y-axis
-        svg.append("g")
-            .attr("class", "y-axis")
-            .call(d3.axisLeft(y).ticks(null, "s"));*/
-
-        var bars = svg.selectAll(".barChart")
-            .data(data);
-
-        //bars.exit().remove();
-
-        bars.enter()
-            .append("rect")
-            .attr("class", "barChart")
-            .attr("x", 37)
-            .attr("y", function(d){
-                return y(d.airplane);
-            })
-            .attr("height", y.bandwidth())
-            .attr("width", function(d){
-                return x(d.PREDICTED_DELAY);
-            })
-            .style("fill", "darkorange")
-            .transition().duration(speed)
-
-        bars.attr("x", 37)
-            .attr("y", function(d){
-                return y(d.airplane);
-            })
-            .attr("height", y.bandwidth())
-            .attr("width", function(d){
-                return x(d.PREDICTED_DELAY);
-            })
-
-
-        bars.exit().remove();
+function updatePred() {
+    currPred = rawPred
+    if(curDay) {
+        currPred = currPred.filter(d => d.day == curDay)
+    }
+    if(curMonth) {
+        currPred = currPred.filter(d => d.month == curMonth)
     }
 
-    var select = d3.select("#year")
-        .on("change", function() {
-            console.log(this.value)
-            update(this.value, 750)
-        })
+    if(curT2 >= curT1) {
+        currPred = currPred.filter(d => d.dep_time >= curT1 && d.dep_time <= curT2)
+    } else {
+        currPred = currPred.filter(d => d.dep_time >= curT2 && d.dep_time <= curT1)
+    }
 
-    var checkbox = d3.select("#sort")
-        .on("click", function() {
-            update(select.property("value"), 750)
-        })
+    if(curA2 >= curA1) {
+        currPred = currPred.filter(d => d.arr_time >= curA1 && d.arr_time <= curA2)
+    } else {
+        currPred = currPred.filter(d => d.arr_time >= curA2 && d.arr_time <= curA1)
+    }
+
+    if (curOri != null) {
+        currPred = currPred.filter(d => d.ori == curOri)
+    }
+
+    if (curDest != null) {
+        currPred = currPred.filter(d => d.dest == curDest)
+    }
+}
+
+function removeBarchart() {
+    d3.select("#barchart").remove();
 }
 
